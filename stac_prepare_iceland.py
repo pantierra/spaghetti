@@ -3,7 +3,7 @@ import json
 import pystac
 import requests
 
-DATA_DIRECTORY = "/home/user/Code/devseed/data/sentinel2-l2a-iceland"
+DATA_DIRECTORY = "/home/user/Code/devseed/static-stac/sentinel2-l2a-iceland"
 
 catalog_path = os.path.join(DATA_DIRECTORY, 'catalog.json')
 
@@ -36,7 +36,7 @@ payload = {
     "collections": ["sentinel-2-l2a"],
     "bbox": [-24.95, 63.38, -13.99, 66.56],
     "datetime": "2023-01-01T00:00:00Z/2023-12-31T23:59:59Z",
-    "limit": 1,
+    "limit": 500,
     "query": {
         "eo:cloud_cover": {
             "lt": 5
@@ -65,19 +65,28 @@ if response.status_code == 200:
         filtered_assets = {k: v for k, v in stac_item.assets.items() if 'jp2' not in v.href}
         stac_item.assets = filtered_assets
 
+        # # Download assets
+        # for asset in stac_item.assets.values():
+        #     print(f"Downloading asset: {asset.href}")
+        #     asset_response = requests.get(asset.href)
+        #     os.makedirs(os.path.join(items_directory, stac_item.id), exist_ok=True)
+        #     asset_path = os.path.join(items_directory, stac_item.id, os.path.basename(asset.href))
+        #     with open(asset_path, 'wb') as f:
+        #         f.write(asset_response.content)
+
         items_list["features"].append(stac_item.to_dict())  # Append STAC item to the features list
 
     # Write items to items.json
     items_json_path = os.path.join(items_directory, 'items.json')
     with open(items_json_path, 'w') as f:
 
-        # # Write readible list of features-
-        # json.dump(items_list, f, indent=2)
+        # Write readible list of features
+        json.dump(items_list, f, indent=2)
 
-        # Write each feature on a new line (pgstac wants that)
-        for feature in items_list["features"]:
-            json.dump(feature, f)
-            f.write('\n')
+        # # Write each feature on a new line (pgstac wants that)
+        # for feature in items_list["features"]:
+        #     json.dump(feature, f)
+        #     f.write('\n')
 
     print(f"Items saved to {items_json_path}")
 
